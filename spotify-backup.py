@@ -166,6 +166,10 @@ def main():
     albums = spotify.list('me/albums', {'limit': 2})
     log(','.join(map(lambda x: x['album']['name'],albums)))
 
+    # List saved tracks
+    tracks = spotify.list('me/tracks', {'limit': 2})
+    log(','.join(map(lambda x: x['track']['name'],tracks)))
+
     # List followed artists
     artists = spotify.list1('me/following?type=artist', {'limit': 50},
                            lambda x: x['artists']['items'],
