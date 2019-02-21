@@ -143,7 +143,7 @@ def main():
                                                  + ' an OAuth token with the --token option.')
     parser.add_argument('--token', metavar='OAUTH_TOKEN', help='use a Spotify OAuth token (requires the '
                                                                + '`playlist-read-private` permission)')
-    parser.add_argument('--format', default='txt', choices=['json', 'txt'], help='output format (default: txt)')
+    parser.add_argument('--format', default='json', choices=['json', 'txt'], help='output format (default: txt)')
     parser.add_argument('file', help='output filename', nargs='?')
     args = parser.parse_args()
     
@@ -163,12 +163,20 @@ def main():
     log('Logged in as {display_name} ({id})'.format(**me))
     
     # List saved albums
-    albums = spotify.list('me/albums', {'limit': 2})
+    albums = spotify.list('me/albums', {'limit': 50})
     log(','.join(map(lambda x: x['album']['name'],albums)))
+    # Write the file.
+    fn=args.file+'-'+'saved-albums'+'.'+args.format
+    with open(fn, 'w', encoding='utf-8') as f:
+        json.dump(albums, f)
+    log('Wrote {n} albums to file: {f}'.format(n=len(albums),f=fn))
 
     # List saved tracks
-    tracks = spotify.list('me/tracks', {'limit': 2})
-    log(','.join(map(lambda x: x['track']['name'],tracks)))
+    tracks = spotify.list('me/tracks', {'limit': 50})
+    fn = args.file+'-'+'saved-tracks'+'.'+args.format
+    with open(fn, 'w', encoding='utf-8') as f:
+        json.dump(tracks, f)
+    log('Wrote {n} tracks to file: {f}'.format(n=len(tracks), f=fn))
 
     # List followed artists
     artists = spotify.list1('me/following?type=artist', {'limit': 50},
@@ -176,6 +184,10 @@ def main():
                            lambda x: x['artists']['cursors']['after'],
                            lambda x: x['artists']['cursors'])
     log(','.join(map(lambda x: x['name'], artists)))
+    fn = args.file+'-'+'followed-artists'+'.'+args.format
+    with open(fn, 'w', encoding='utf-8') as f:
+        json.dump(artists, f)
+    log('Wrote {n} artists to file: {f}'.format(n=len(artists), f=fn))
 
     # List all playlists and all track in each playlist.
     playlists = spotify.list('users/{user_id}/playlists'.format(user_id=me['id']), {'limit': 50})
@@ -184,7 +196,8 @@ def main():
         playlist['tracks'] = spotify.list(playlist['tracks']['href'], {'limit': 100})
     
     # Write the file.
-    with open(args.file, 'w', encoding='utf-8') as f:
+    fn = args.file + '-' + 'playlists' + '.' + args.format
+    with open(fn, 'w', encoding='utf-8') as f:
         # JSON file.
         if args.format == 'json':
             json.dump(playlists, f)
@@ -201,7 +214,7 @@ def main():
                         album=track['track']['album']['name']
                     ))
                 f.write('\r\n')
-    log('Wrote file: ' + args.file)
+    log('Wrote file: ' + fn)
 
 
 if __name__ == '__main__':
